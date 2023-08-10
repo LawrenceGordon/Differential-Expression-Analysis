@@ -6,7 +6,7 @@ A tutorial guiding the use through differential expression analysis on RNA-Seq d
 - Reference genome in fasta format with GTF and GFF files
   - Ex: https://www.ncbi.nlm.nih.gov/assembly/GCF_000002985.6/
 
-## Workflow:
+## Typical RNA-Seq Workflow:
 
 ### 1. Trim raw reads with Trimmomatic (http://www.usadellab.org/cms/?page=trimmomatic): 
 
@@ -171,7 +171,7 @@ The script `deseq.r` can be used to run DESeq2 in R. The R version will produce 
 The multiple test p-value adjustment method in R is different from the Python method, producing slightly different (less strict) results.
 To run the script, the libraries DESeq2, pheatmap, RColorBrewer, apeglm, ggplot2, and data.table must be installed.
 ```
-Rscript ./deseq.r <counts csv> <affected sample prefix> <alpha value>
+Rscript ./deseq.r <counts tsv> <affected sample prefix> <alpha value>
 ```
 The script uses positional arguments including the path to the `gene.counts.matrix` file, the affected sample condition prefix, and the alpha value. Multiple files are produced including `raw_results.csv`, `deseq_results_non_nan.csv`, `shrunk_deseq_results_non_nan.csv`, `upregulated.csv`, `downregulated.csv`, `shrunk_upregulated.csv`, and `shrunk_downregulated.csv`. The upregulated and downregulated results are filtered on the provided alpha value. In addition, a heatmap with sample cladogram is saved to `heatmap.pdf` while a PCA plot is saved to `PCA.png`.
 
@@ -192,7 +192,7 @@ options:
   --counts COUNTS    counts matrix containing read counts
   --out OUT, -o OUT  prefix for output files
 ```
-Providing a GFF file, `gene.counts.matrix`, the deseq results to the script `summarize_deseq_data_with_gff.py` will pair the GFF annotation information with the features from the counts matrix to provide context for significant features.
+Providing a GFF file, `gene.counts.matrix`, and the deseq results to the script `summarize_deseq_data_with_gff.py` will pair the GFF annotation information with the features from the counts matrix to provide context for significant features.
 ```
 ./summarize_deseq_data_with_gff.py --gff GCF_000002985.6_WBcel235_genomic.gff --counts gene.counts.matrix --out upregulated_summary deseq_upregulated_shrunk_non_nan_unfiltered_deseq_cooks_refit.csv
 ```
@@ -206,4 +206,92 @@ CELE_C23H3.4,Serine palmitoyltransferase 1,52,95,102,98,77,724,455,415,241.71697
 CELE_C32F10.2,Retinoblastoma-like protein homolog lin-35,209,209,281,215,258,952,706,857,448.69117281224624,1.4029473790901585,0.3655887965173853,4.455525895228331,8.368779311591284e-06,0.019978667296571707
 CELE_F32A5.3,Serine carboxypeptidase ctsa-3.1,38,18,28,14,66,88,59,82,48.64588240406012,1.3517904699454375,0.3893730838546,4.140799039298287,3.460980822414412e-05,0.0444895773256671
 CELE_H01G02.3,Uncharacterized protein,27,33,19,23,51,107,77,55,48.12283560868961,1.2947949334902555,0.3589221400094513,4.246205050651833,2.1742166766293018e-05,0.03314852255624289
+```
+
+## PALADIN Workflow:
+
+### 1. Run raw reads through PALADIN (https://github.com/ToniWestbrook/paladin): 
+
+```
+for forward in raw-reads/*R1*
+do
+	output=$(basename $forward | cut -f 1 -d'.')
+	paladin align -o $output -t 24 -P $proxy $database $forward
+done
+```
+
+This will perform PALADIN alignment on all forward reads, putting results in the same prefix as the read.
+Replace `$proxy` with a proxy address if working on an offline node and `$database` with the path to the desired database (Ex: UniRef90).
+
+### 2. Combine PALADIN .tsv reports into a single counts matrix:
+```
+$ ./paladin_tsv_to_count_matrix.py -h
+
+usage: paladin_tsv_to_count_matrix.py [-h] [--minqual MINQUAL] [--out OUT] pal [pal ...]
+
+Combines paladin TSVs into count matrix
+
+positional arguments:
+  pal                   paladin tsvs
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --minqual MINQUAL, -q MINQUAL
+                        minimum average quality to filter by
+  --out OUT, -o OUT     output name for final file
+```
+This will combine all PALADIN .tsv results into a single count matrix in R DESeq2 format. An optional `--minqual` flag can be used to set a minimum quality for kept counts.
+```
+./paladin_tsv_to_count_matrix.py *.tsv --out paladin_count_matrix.tsv
+```
+
+```
+$ less -S paladin_count_matrix.tsv
+
+	sample1	sample2	sample3	sample4	sample5	sample6	
+16ABF_BIFLN	0	0	0	0	0	1	
+3AHDP_RUMGV	0	0	0	0	0	0	...
+3AHD_EGGLE	0	1	2	0	0	0
+...
+```
+
+### 3. Running DESeq2 (R Alternative):
+The script `deseq.r` can be used to run DESeq2 in R. The R version will produce PCA plots and heatmaps for the data.
+The multiple test p-value adjustment method in R is different from the Python method, producing slightly different (less strict) results.
+To run the script, the libraries DESeq2, pheatmap, RColorBrewer, apeglm, ggplot2, and data.table must be installed.
+```
+Rscript ./deseq.r <counts tsv> <affected sample prefix> <alpha value>
+```
+The script uses positional arguments including the path to the `paladin_count_matrix.tsv` file, the affected sample condition prefix, and the alpha value. Multiple files are produced including `raw_results.csv`, `deseq_results_non_nan.csv`, `shrunk_deseq_results_non_nan.csv`, `upregulated.csv`, `downregulated.csv`, `shrunk_upregulated.csv`, and `shrunk_downregulated.csv`. The upregulated and downregulated results are filtered on the provided alpha value. In addition, a heatmap with sample cladogram is saved to `heatmap.pdf` while a PCA plot is saved to `PCA.png`.
+
+### 4. Summarizing DESeq2 results:
+```
+$ ./summarize_deseq_data_with_paladin.py -h
+
+usage: summarize_deseq_data_with_paladin.py [-h] [--pal PAL [PAL ...]] [--counts COUNTS] [--out OUT] deseq
+
+Filters gff file based on filtered fasta file
+
+positional arguments:
+  deseq                csv file in standard deseq format
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --pal PAL [PAL ...]  paladin files containing functional annotations
+  --counts COUNTS      counts matrix containing read counts
+  --out OUT, -o OUT    prefix for output files
+```
+Providing the PALADIN tsv files, `paladin_count_matrix.tsv`, and the deseq results to the script `summarize_deseq_data_with_gff.py` will pair the PALADIN annotation information with the features from the counts matrix to provide context for significant features.
+```
+./summarize_deseq_data_with_paladin.py deseq_results_non_nan.csv --pal *tsv --counts paladin_count_matrix.tsv --out deseq_gene_summary
+```
+
+```
+$ less -S deseq_gene_summary.csv
+
+feature,annotation,C054,C055_t2dm,C056_t2dm,C057,C058,C059,baseMean,log2FoldChange,lfcSE,stat,pvalue,padj
+A0A014AUH4_9GAMM,Acinetobacter sp. 25977_7;Uncharacterized protein;J810_4084,0,0,28,0,0,0,4.30397859596638,0.373512097764134,1.15638025333893,0.323001103387623,0.746694406435262,0.999926231467233
+A0A015S3H7_BACFG,Bacteroides fragilis str. 3986 N(B)19;Alanine racemase (EC 5.1.1.1);alr M085_0754,0,7,17,0,0,0,3.32151320511241,0.290512098421384,1.00191425068489,0.28995704794377,0.771849097381583,0.999926231467233
+A0A015T1R3_BACFG,Bacteroides fragilis str. 3988T(B)14;Conjugative transposon TraM protein;M124_4633,0,0,3,0,0,0,3.21828923466149,-1.26343332614334,1.33070141327592,-0.949449150304144,0.342392222559533,0.999926231467233
+
 ```
