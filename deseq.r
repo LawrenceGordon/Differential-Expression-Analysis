@@ -30,7 +30,7 @@ conditions <- c()
 i = 1
 for (sample in samples) {
     condition <- "unaffected"
-    if (grepl(args[2], sample, fixed=TRUE)) {
+    if (grepl(args[2], sample, fixed=FALSE)) {
         condition <- "affected"
     }
 
@@ -64,6 +64,14 @@ dds <- DESeq(dds)
 # generate stats summary and perform lfc shrinkage
 res05 <- results(dds, alpha=args[3])
 resLFC <- lfcShrink(dds, coef=2, res=res05, type="apeglm")
+
+# order results by smallest padj
+res05 <- res05[order(res05$padj),]
+resLFC <- resLFC[order(resLFC$padj),]
+
+# MA plot
+plotMA(res05, ylim=c(-2,2))
+plotMA(resLFC, ylim=c(-2,2))
 
 # isolate up and downregulated genes using adjusted pvalue
 get_significant_genes <- function(df, pvalue = 0.05, l2fc = 1) {
