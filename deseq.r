@@ -1,4 +1,4 @@
-#! ~/.conda/envs/Rdeseq2/bin/R
+
 
 library("DESeq2")
 library(data.table)
