@@ -15,6 +15,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 if ( length(args) < 3 ) {
     print("Provide counts csv, affected prefix, and alpha value")
+    quit()
 }
 
 # read counts into matrix from csv
