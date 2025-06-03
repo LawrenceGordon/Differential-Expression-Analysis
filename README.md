@@ -12,7 +12,7 @@ A tutorial guiding the use through differential expression analysis on RNA-Seq d
 ## Creating a Conda Environment:
 - This step is necessary to install all the tools and scripts for this tutorial. The below code
   contains the steps for the R version of this pipeline. The tutorial assumes you run all scripts
-  from this directory.
+  from the `Differential-Expression-Analysis` directory.
 ```
 conda create --name rnaseq --yes
 conda activate rnaseq
