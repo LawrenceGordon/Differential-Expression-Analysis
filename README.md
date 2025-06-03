@@ -5,6 +5,22 @@ A tutorial guiding the use through differential expression analysis on RNA-Seq d
 - Raw Reads from sequencing, typically in fastq or fastq.gz format
 - Reference genome in fasta format with GTF and GFF files
   - Ex: https://www.ncbi.nlm.nih.gov/assembly/GCF_000002985.6/
+  - Easiest way to get this is to navigate to the Genome page on NCBI, click FTP, and then
+    copy the link for *_genomic.fna.gz, then run ```wget your_link``` on the server. Repeat
+    this process with the *_genomic.gtf.gz and *_genomic.gff.gz files.
+
+## Creating a Conda Environment:
+- This step is necessary to install all the tools and scripts for this tutorial. The below code
+  contains the steps for the R version of this pipeline. The tutorial assumes you run all scripts
+  from this directory.
+```
+conda create --name rnaseq --yes
+conda activate rnaseq
+conda install trimmomatic htseq hisat2 bioconductor-deseq2 bioconductor-apeglm r-ggplot2 r-rcolorbrewer r-pheatmap r-base --yes r-data.table --yes
+git clone https://github.com/LawrenceGordon/Differential-Expression-Analysis.git
+chmod -R 755 Differential-Expression-Analysis/
+cd Differential-Expression-Analysis/
+```
 
 ## Typical RNA-Seq Workflow:
 
