@@ -16,7 +16,7 @@ A tutorial guiding the use through differential expression analysis on RNA-Seq d
 ```
 conda create --name rnaseq --yes
 conda activate rnaseq
-conda install trimmomatic htseq hisat2 bioconductor-deseq2 bioconductor-apeglm r-ggplot2 r-rcolorbrewer r-pheatmap r-base --yes r-data.table --yes
+conda install trimmomatic htseq hisat2 bioconductor-deseq2 bioconductor-apeglm r-ggplot2 r-rcolorbrewer r-pheatmap r-base r-optparse r-data.table --yes
 git clone https://github.com/LawrenceGordon/Differential-Expression-Analysis.git
 chmod -R 755 Differential-Expression-Analysis/
 cd Differential-Expression-Analysis/
