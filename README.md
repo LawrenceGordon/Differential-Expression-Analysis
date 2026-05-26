@@ -39,7 +39,8 @@ trimmomatic PE -threads 24 $forward $reverse\
 This will perform trimming on one set of paired end reads.
 Replace `$forward` with the R1 reads and `$reverse` with the R2 reads for each sample.
 Replace `$paired_forward`, `$unpaired_forward`, `$paired_reverse`, and `$unpaired_reverse` with the desired names.
-`$ADAPTERS` must be a path to a fasta file with the sequencing adapters used.
+`$ADAPTERS` must be a path to a fasta file with the sequencing adapters used. `adapters.fa` is provided in the 
+main repo for general use.
 
 
 ### 2. Build index for reference genome with hisat2-build (https://daehwankimlab.github.io/hisat2/manual/):
